@@ -30,7 +30,7 @@ local function update_specs()
         end
     else
         local class = select(2, UnitClass("player"))
-        db[extension][class] = {}
+        db[extension][class] = db[extension][class] or {}
         local dbClass = db[extension][class]
         local backgroundIndex = MAX_NUM_TALENTS * GetNumTalentTabs() + 1
         dbClass[backgroundIndex] = {}
@@ -40,7 +40,10 @@ local function update_specs()
             for num_talent = 1, GetNumTalents(tab) do
                 local name, icon, tier, column = GetTalentInfo(tab, num_talent)
                 local talentId = (tab - 1) * MAX_NUM_TALENTS + num_talent
-                dbClass[talentId] = {icon,tier,column}
+                dbClass[talentId] = dbClass[talentId] or {}
+                dbClass[talentId][1] = icon
+                dbClass[talentId][2] = tier
+                dbClass[talentId][3] = column
             end
         end
     end
@@ -50,6 +53,8 @@ end
 hooksecurefunc(GameTooltip, "SetTalent", function(self, i, j)
     local db = DB
     local _, class = UnitClass("player")
+    local _, _, _, _, rank, maxRank = GetTalentInfo(i, j)
+    if rank ~= maxRank then return end
     local dbClass = db[extension][class]
     local tab = PanelTemplates_GetSelectedTab(PlayerTalentFrame)
     if tab and PlayerTalentFrame:IsVisible() then
