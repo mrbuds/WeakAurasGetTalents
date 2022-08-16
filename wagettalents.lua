@@ -40,10 +40,14 @@ local function update_specs()
             for num_talent = 1, GetNumTalents(tab) do
                 local name, icon, tier, column = GetTalentInfo(tab, num_talent)
                 local talentId = (tab - 1) * MAX_NUM_TALENTS + num_talent
-                dbClass[talentId] = dbClass[talentId] or {}
-                dbClass[talentId][1] = icon
-                dbClass[talentId][2] = tier
-                dbClass[talentId][3] = column
+                if name == nil then
+                    dbClass[talentId] = nil
+                else
+                    dbClass[talentId] = dbClass[talentId] or {}
+                    dbClass[talentId][1] = icon
+                    dbClass[talentId][2] = tier
+                    dbClass[talentId][3] = column
+                end
             end
         end
     end
