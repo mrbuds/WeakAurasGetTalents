@@ -47,6 +47,22 @@ local function update_specs()
     print("Talents saved")
 end
 
+hooksecurefunc(GameTooltip, "SetTalent", function(self, i, j)
+    local db = DB
+    local _, class = UnitClass("player")
+    local dbClass = db[extension][class]
+    local tab = PanelTemplates_GetSelectedTab(PlayerTalentFrame)
+    if tab and PlayerTalentFrame:IsVisible() then
+        local talentId = (tab - 1) * MAX_NUM_TALENTS + j
+        local spellID = select(2, self:GetSpell())
+        if spellID then
+            dbClass[talentId][4] = select(2, self:GetSpell())
+            local name = GetSpellInfo(dbClass[talentId][4])
+            print("saved", dbClass[talentId][4], name)
+        end
+    end
+end)
+
 
 local spec_frame = CreateFrame("Frame")
 spec_frame:RegisterEvent("PLAYER_LOGIN")
