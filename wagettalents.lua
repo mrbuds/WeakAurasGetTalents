@@ -21,7 +21,9 @@ local function update_specs()
         db[extension][specId] = {}
         local dbSpec = db[extension][specId]
         local configId = C_ClassTalents.GetActiveConfigID()
+        if configId == nil then return end
         local configInfo = C_Traits.GetConfigInfo(configId)
+        if configInfo == nil then return end
         for _, treeId in ipairs(configInfo.treeIDs) do
             local nodes = C_Traits.GetTreeNodes(treeId)
             for _, nodeId in ipairs(nodes) do
