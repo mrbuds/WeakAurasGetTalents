@@ -14,7 +14,37 @@ local function update_specs()
     local db = DB
     db[extension] = db[extension] or {}
 
-    if currentBuild >= 9 then
+    if currentBuild == 10 then
+        local classID = select(3, UnitClass("player"))
+        local specIndex = GetSpecialization()
+        local specId = GetSpecializationInfoForClassID(classID, specIndex)
+        db[extension][specId] = {}
+        local dbSpec = db[extension][specId]
+        local configId = C_ClassTalents.GetActiveConfigID()
+        local configInfo = C_Traits.GetConfigInfo(configId)
+        for _, treeId in ipairs(configInfo.treeIDs) do
+            local nodes = C_Traits.GetTreeNodes(treeId)
+            for _, nodeId in ipairs(nodes) do
+                local node = C_Traits.GetNodeInfo(configId, nodeId)
+                if node.ID ~= 0 then
+                    for idx, talentId in ipairs(node.entryIDs) do
+                        local entryInfo = C_Traits.GetEntryInfo(configId, talentId)
+                        local definitionInfo = C_Traits.GetDefinitionInfo(entryInfo.definitionID)
+                        local spellName = GetSpellInfo(definitionInfo.spellID)
+                        if spellName then
+                            dbSpec[talentId] = {}
+                            dbSpec[talentId][1] = definitionInfo.spellID
+                            dbSpec[talentId][2] = { node.posX, node.posY, idx, #node.entryIDs }
+                            dbSpec[talentId][3] = {}
+                            for _, edge in pairs(node.visibleEdges) do
+                                tinsert(dbSpec[talentId][3], edge.targetNode)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    elseif currentBuild == 9 then
         for specIndex = 1, GetNumSpecializations() do
             local specId = GetSpecializationInfo(specIndex)
             db[extension][specId] = db[extension][specId] or {}
@@ -54,25 +84,32 @@ local function update_specs()
     print("Talents saved")
 end
 
-hooksecurefunc(GameTooltip, "SetTalent", function(self, i, j)
-    local db = DB
-    local _, class = UnitClass("player")
-    local _, _, _, _, rank, maxRank = GetTalentInfo(i, j)
-    if rank ~= maxRank then return end
-    local dbClass = db[extension][class]
-    local tab = PanelTemplates_GetSelectedTab(PlayerTalentFrame)
-    if tab and PlayerTalentFrame:IsVisible() then
-        local talentId = (tab - 1) * MAX_NUM_TALENTS + j
-        local spellID = select(2, self:GetSpell())
-        if spellID then
-            dbClass[talentId][4] = select(2, self:GetSpell())
-            local name = GetSpellInfo(dbClass[talentId][4])
-            print("saved", dbClass[talentId][4], name)
+if currentBuild < 9 then
+    hooksecurefunc(GameTooltip, "SetTalent", function(self, i, j)
+        local db = DB
+        local _, class = UnitClass("player")
+        local _, _, _, _, rank, maxRank = GetTalentInfo(i, j)
+        if rank ~= maxRank then return end
+        local dbClass = db[extension][class]
+        local tab = PanelTemplates_GetSelectedTab(PlayerTalentFrame)
+        if tab and PlayerTalentFrame:IsVisible() then
+            local talentId = (tab - 1) * MAX_NUM_TALENTS + j
+            local spellID = select(2, self:GetSpell())
+            if spellID then
+                dbClass[talentId][4] = select(2, self:GetSpell())
+                local name = GetSpellInfo(dbClass[talentId][4])
+                print("saved", dbClass[talentId][4], name)
+            end
         end
-    end
-end)
+    end)
+end
 
 
 local spec_frame = CreateFrame("Frame")
-spec_frame:RegisterEvent("PLAYER_LOGIN")
+spec_frame:RegisterEvent("PLAYER_ENTERING_WORLD")
+if currentBuild == 10 then
+    spec_frame:RegisterEvent("TRAIT_CONFIG_CREATED")
+    spec_frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
+end
+spec_frame:RegisterEvent("PLAYER_TALENT_UPDATE")
 spec_frame:SetScript("OnEvent", update_specs)
