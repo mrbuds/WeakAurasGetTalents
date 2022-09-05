@@ -34,13 +34,23 @@ local function update_specs()
                         local definitionInfo = C_Traits.GetDefinitionInfo(entryInfo.definitionID)
                         local spellName = GetSpellInfo(definitionInfo.spellID)
                         if spellName then
-                            dbSpec[talentId] = {}
-                            dbSpec[talentId][1] = definitionInfo.spellID
-                            dbSpec[talentId][2] = { node.posX, node.posY, idx, #node.entryIDs }
-                            dbSpec[talentId][3] = {}
+                            local talentData = {
+                                talentId,
+                                definitionInfo.spellID,
+                                { node.posX, node.posY, idx, #node.entryIDs },
+                                {}
+                            }
                             for _, edge in pairs(node.visibleEdges) do
-                                tinsert(dbSpec[talentId][3], edge.targetNode)
+                                local targetNodeId = edge.targetNode
+                                local targetNode = C_Traits.GetNodeInfo(configId, targetNodeId)
+                                local targetNodeTalentId1 = targetNode.entryIDs[1]
+                                if targetNodeTalentId1 then
+                                    -- add as target 1st talentId
+                                    -- because we don't save nodes
+                                    tinsert(talentData[4], targetNodeTalentId1)
+                                end
                             end
+                            tinsert(dbSpec, talentData)
                         end
                     end
                 end
