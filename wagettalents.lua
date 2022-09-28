@@ -28,7 +28,7 @@ local function update_specs()
             local nodes = C_Traits.GetTreeNodes(treeId)
             for _, nodeId in ipairs(nodes) do
                 local node = C_Traits.GetNodeInfo(configId, nodeId)
-                if node.ID ~= 0 then
+                if node and node.ID ~= 0 then
                     for idx, talentId in ipairs(node.entryIDs) do
                         local entryInfo = C_Traits.GetEntryInfo(configId, talentId)
                         local definitionInfo = C_Traits.GetDefinitionInfo(entryInfo.definitionID)
@@ -124,4 +124,6 @@ if currentBuild == 10 then
     spec_frame:RegisterEvent("TRAIT_CONFIG_UPDATED")
 end
 spec_frame:RegisterEvent("PLAYER_TALENT_UPDATE")
-spec_frame:SetScript("OnEvent", update_specs)
+spec_frame:SetScript("OnEvent", function()
+    C_Timer.After(1, update_specs)
+end)
